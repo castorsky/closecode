@@ -97,6 +97,11 @@ export namespace RipgrepBinary {
             const target = path.join(Global.Path.bin, `rg${process.platform === "win32" ? ".exe" : ""}`)
             if (yield* fs.isFile(target).pipe(Effect.orDie)) return target
 
+            // OFFLINE: never download the ripgrep binary from GitHub releases — no outbound HTTP allowed.
+            throw new Error(
+              "OFFLINE build: ripgrep not found locally — install 'rg' on PATH or pre-place it in " + Global.Path.bin,
+            )
+
             const platformKey = `${process.arch}-${process.platform}` as keyof typeof PLATFORM
             const config = PLATFORM[platformKey]
             if (!config) throw new Error(`unsupported platform for ripgrep: ${platformKey}`)

@@ -15,7 +15,8 @@ import { ServeCommand } from "./cli/cmd/serve"
 import { DebugCommand } from "./cli/cmd/debug"
 import { StatsCommand } from "./cli/cmd/stats"
 import { McpCommand } from "./cli/cmd/mcp"
-import { GithubCommand } from "./cli/cmd/github"
+// OFFLINE: `opencode github` removed — it calls api.opencode.ai and api.github.com.
+// import { GithubCommand } from "./cli/cmd/github"
 import { ExportCommand } from "./cli/cmd/export"
 import { ImportCommand } from "./cli/cmd/import"
 import { AttachCommand } from "./cli/cmd/attach"
@@ -96,7 +97,7 @@ const cli = yargs(args)
   .command(StatsCommand)
   .command(ExportCommand)
   .command(ImportCommand)
-  .command(GithubCommand)
+  // OFFLINE: `opencode github` subcommand unregistered.
   .command(PrCommand)
   .command(SessionCommand)
   .command(PluginCommand)

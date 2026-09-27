@@ -64,24 +64,23 @@ export function experimentalWebSocketsEnabled(input: { enabled: boolean; channel
 }
 
 // Built-in plugins that are directly imported (not installed from npm)
-function internalPlugins(flags: RuntimeFlags.Info): PluginInstance[] {
+function internalPlugins(_flags: RuntimeFlags.Info): PluginInstance[] {
+  // OFFLINE: cloud/OAuth provider plugins removed — only local LLM endpoints (Ollama, llama.cpp, LM Studio, …)
+  // and user-configured remote MCP servers are allowed to make network connections.
+  void _flags
   return [
-    // Temporary rollout: pre-release builds use WebSockets by default; releases require explicit opt-in.
-    (input) =>
-      CodexAuthPlugin(input, {
-        experimentalWebSockets: experimentalWebSocketsEnabled({ enabled: flags.experimentalWebSockets }),
-      }),
-    CopilotAuthPlugin,
-    ModalPlugin,
-    GitlabAuthPlugin,
-    PoeAuthPlugin,
-    CloudflareWorkersAuthPlugin,
-    CloudflareAIGatewayAuthPlugin,
-    AzureAuthPlugin,
-    DigitalOceanAuthPlugin,
-    SnowflakeCortexAuthPlugin,
-    XaiAuthPlugin,
-    CerebrasPlugin,
+    // (input) => CodexAuthPlugin(input, { experimentalWebSockets: ... }),   // OFFLINE: OpenAI/ChatGPT OAuth
+    // CopilotAuthPlugin,                                                    // OFFLINE: GitHub Copilot OAuth
+    // ModalPlugin,                                                          // OFFLINE: Modal API
+    // GitlabAuthPlugin,                                                     // OFFLINE: GitLab Duo
+    // PoeAuthPlugin,                                                        // OFFLINE: Poe
+    // CloudflareWorkersAuthPlugin,                                          // OFFLINE: Cloudflare Workers AI
+    // CloudflareAIGatewayAuthPlugin,                                        // OFFLINE: Cloudflare AI Gateway
+    // AzureAuthPlugin,                                                      // OFFLINE: Azure OAuth
+    // DigitalOceanAuthPlugin,                                               // OFFLINE: DigitalOcean OAuth
+    // SnowflakeCortexAuthPlugin,                                            // OFFLINE: Snowflake Cortex OAuth
+    // XaiAuthPlugin,                                                        // OFFLINE: xAI OAuth
+    // CerebrasPlugin,                                                       // OFFLINE: Cerebras
   ]
 }
 

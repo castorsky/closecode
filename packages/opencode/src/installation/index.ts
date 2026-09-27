@@ -205,8 +205,11 @@ const layer: Layer.Layer<Service, never, HttpClient.HttpClient | AppProcess.Serv
 
         return "unknown" as Method
       }),
-      latest: Effect.fn("Installation.latest")(function* (installMethod?: Method) {
-        const detectedMethod = installMethod || (yield* result.method())
+      latest: Effect.fn("Installation.latest")(function* (_installMethod?: Method) {
+        // OFFLINE: no update checks — never query npm/brew/choco/scoop/GitHub release APIs.
+        return InstallationVersion
+
+        const detectedMethod = _installMethod || (yield* result.method())
 
         if (detectedMethod === "brew") {
           const formula = yield* getBrewFormula()
@@ -263,6 +266,9 @@ const layer: Layer.Layer<Service, never, HttpClient.HttpClient | AppProcess.Serv
         return data.tag_name.replace(/^v/, "")
       }, Effect.orDie),
       upgrade: Effect.fn("Installation.upgrade")(function* (m: Method, target: string) {
+        // OFFLINE: self-upgrade disabled — would download from npm/brew/choco/scoop/opencode.ai.
+        return yield* new UpgradeFailedError({ stderr: `Upgrade disabled in offline build (method: ${m}).` })
+
         let upgradeResult: { code: number; stdout: string; stderr: string } | undefined
         switch (m) {
           case "curl":
