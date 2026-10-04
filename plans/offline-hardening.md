@@ -54,6 +54,15 @@ Note: plain API-key providers (Anthropic, OpenAI-compatible, etc.) remain usable
 |---|------|--------|
 | P10 | [`packages/opencode/src/share/share-next.ts`](packages/opencode/src/share/share-next.ts:23) | Force `disabled = true` — the share service uploads **full session content (messages + code diffs)** to `opncd.ai`, which would leak enterprise code. Not in the original 9-patch list; added during implementation. |
 
+### 7. NPM registry install of @opencode-ai/plugin (found during audit)
+
+| # | File | Change |
+|---|------|--------|
+| P11a | [`packages/opencode/src/config/config.ts`](packages/opencode/src/config/config.ts:452) | In `loadInstanceState`, comment out the `npmSvc.install(dir, { add: [{ name: "@opencode-ai/plugin", ... }] })` block (lines 452–471). Replace with a no-op push of an already-resolved fiber or simply skip pushing to `deps`. Comment: `// OFFLINE: never install @opencode-ai/plugin from npm registry — pre-place it in node_modules if needed`. |
+| P11b | [`packages/opencode/src/config/tui.ts`](packages/opencode/src/config/tui.ts:234) | In the TUI config layer, comment out the `Effect.forEach(data.dirs, (dir) => npm.install(dir, { add: [{ name: "@opencode-ai/plugin", ... }] }))` block (lines 234–250). Replace with `const deps = [] as Fiber.Fiber<void>[]`. Comment: `// OFFLINE: never install @opencode-ai/plugin from npm registry — pre-place it in node_modules if needed`. |
+
+Note: The underlying [`Npm.install`](packages/core/src/npm.ts:147) → `reify` → Arborist chain is the actual network call. Patching at the two call sites (rather than inside `npm.ts`) keeps the change minimal and scoped to the specific package install, consistent with the plan's "one small change per egress point" strategy. Other legitimate uses of `Npm.add` / `Npm.install` for user-configured plugins remain functional if a local registry or pre-populated cache is available.
+
 ### Explicitly NOT patched (allowed by design)
 
 - **Remote MCP servers** — user config, same trust level as a local LLM URL ([`mcp/index.ts`](packages/opencode/src/mcp/index.ts)).
@@ -69,7 +78,8 @@ Note: plain API-key providers (Anthropic, OpenAI-compatible, etc.) remain usable
 2. Grep audit: `grep -rn "fetch(\|HttpClientRequest.get\|new WebSocket" packages/*/src` — every remaining hit must be either local-only, user-config-driven (MCP/provider URL), or behind a documented opt-in flag.
 3. Runtime smoke test with Ollama configured as the only provider: start session, run a prompt; confirm no outbound connections via `lsof -i` / proxy logging while idle and during a turn.
 4. Confirm `webfetch`/`websearch` are absent from the tool list exposed to the model (`opencode debug v2` or TUI tools view).
+5. In a fresh project directory (no pre-existing `node_modules`), start opencode and confirm no npm registry traffic via proxy logging / `lsof -i`; grep for `OFFLINE: never install @opencode-ai/plugin` to confirm P11a/P11b are applied.
 
 ## Patch count summary
 
-10 patches (P1–P10), each ≤ ~15 lines, all marked with `// OFFLINE:` comments — grep for `OFFLINE` to review or selectively re-enable any of them.
+12 patches (P1–P11b), each ≤ ~15 lines, all marked with `// OFFLINE:` comments — grep for `OFFLINE` to review or selectively re-enable any of them.
